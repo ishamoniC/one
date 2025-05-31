@@ -2,24 +2,20 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebas
 import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, deleteDoc, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-messaging.js";
 
-// ✅ Updated Firebase Configuration
-// 🔥 Make sure firebaseConfig is defined first!
+// ✅ Corrected Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyBA5Dr-NS2B-bZKoru3bOHbXnr-fsQjFA4",
     authDomain: "chatapp-fd187.firebaseapp.com",
     projectId: "chatapp-fd187",
     storageBucket: "chatapp-fd187.appspot.com",
-    messagingSenderId: "919355591895",  // ✅ Ensure this is included
+    messagingSenderId: "919355591895",  // 🔥 Fix: Added messagingSenderId
     appId: "1:919355591895:web:31eba4577ba627fe17f492"
 };
 
-// ✅ Now Initialize Firebase
-const app = initializeApp(firebaseConfig);
-console.log("Firebase Config:", firebaseConfig); // This should work now!
-// Initialize Firebase
+// ✅ Initialize Firebase once (Fix duplicate `app` issue)
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const messaging = getMessaging(app);  // Initialize Firebase Messaging
+const messaging = getMessaging(app);
 
 // ✅ Request notification permission from the user
 Notification.requestPermission().then(permission => {
@@ -45,7 +41,7 @@ onMessage(messaging, (payload) => {
     });
 });
 
-// Predefined users
+// ✅ Login & Chat Logic
 const users = {
     "momin": "abcd1234",
     "isha": "abcd1234"
@@ -55,7 +51,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const loginButton = document.getElementById("login-btn");
     const logoutButton = document.getElementById("logout-btn");
 
-    // Handle login system (Prevent errors if `login-btn` doesn’t exist)
     if (loginButton) {
         loginButton.addEventListener("click", function () {
             const usernameInput = document.getElementById("username");
@@ -80,7 +75,6 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Login button not found!");
     }
 
-    // Handle logout system
     if (logoutButton) {
         logoutButton.addEventListener("click", function () {
             localStorage.removeItem("loggedInUser");
@@ -88,7 +82,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Ensure user is logged in before entering chat
     if (window.location.pathname.includes("chat.html")) {
         const loggedInUser = localStorage.getItem("loggedInUser");
         if (!loggedInUser || !users[loggedInUser]) {
@@ -100,16 +93,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const messageInput = document.getElementById("message-input");
     const messagesDiv = document.getElementById("messages");
     const deleteButton = document.getElementById("delete-btn");
-
     const loggedInUser = localStorage.getItem("loggedInUser") || "";
 
-    // Track visibility of the page
     let isPageActive = true;
     document.addEventListener("visibilitychange", () => {
         isPageActive = !document.hidden;
     });
 
-    // Send message
     if (sendButton) {
         sendButton.addEventListener("click", async () => {
             const messageText = messageInput.value.trim();
@@ -124,7 +114,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Real-time message updates + Notifications (Only if user is inactive)
     const q = query(collection(db, "messages"), orderBy("timestamp"));
     onSnapshot(q, (snapshot) => {
         messagesDiv.innerHTML = "";
@@ -141,7 +130,6 @@ document.addEventListener("DOMContentLoaded", function () {
             msgElement.classList.add(msgData.sender.trim() === loggedInUser.trim() ? "sent-message" : "received-message");
             messagesDiv.appendChild(msgElement);
 
-            // Show notification only when user is not on the website
             if (!isPageActive && "Notification" in window && Notification.permission === "granted" && msgData.sender !== loggedInUser) {
                 new Notification(`New message from ${msgData.sender}`, {
                     body: msgData.text,
@@ -153,11 +141,10 @@ document.addEventListener("DOMContentLoaded", function () {
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
 
-    // Delete all messages with password prompt
     if (deleteButton) {
         deleteButton.addEventListener("click", async () => {
             const password = prompt("Enter the password to delete all messages:");
-            if (password === "pass1234") { // Password check
+            if (password === "pass1234") {
                 const snapshot = await getDocs(collection(db, "messages"));
                 snapshot.forEach(async (message) => {
                     await deleteDoc(doc(db, "messages", message.id));
@@ -169,7 +156,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Press Enter to send message
     if (messageInput) {
         messageInput.addEventListener("keypress", (event) => {
             if (event.key === "Enter") {
