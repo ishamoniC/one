@@ -1,7 +1,7 @@
 importScripts("https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js");
 importScripts("https://www.gstatic.com/firebasejs/10.0.0/firebase-messaging.js");
 
-// Initialize Firebase
+// ✅ Initialize Firebase
 firebase.initializeApp({
     apiKey: "AIzaSyBA5Dr-NS2B-bZKoru3bOHbXnr-fsQjFA4",
     authDomain: "chatapp-fd187.firebaseapp.com",
@@ -13,9 +13,8 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Handle background notifications
 messaging.onBackgroundMessage((payload) => {
-    console.log("Received background message: ", payload);
+    console.log("✅ Received background notification:", payload);
     self.registration.showNotification(payload.notification.title, {
         body: payload.notification.body,
         icon: payload.notification.icon || "https://icons.iconarchive.com/icons/icons8/windows-8/256/Messaging-Bubble-icon.png"
