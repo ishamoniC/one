@@ -3,15 +3,19 @@ import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSn
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-messaging.js";
 
 // ✅ Updated Firebase Configuration
+// 🔥 Make sure firebaseConfig is defined first!
 const firebaseConfig = {
     apiKey: "AIzaSyBA5Dr-NS2B-bZKoru3bOHbXnr-fsQjFA4",
     authDomain: "chatapp-fd187.firebaseapp.com",
     projectId: "chatapp-fd187",
     storageBucket: "chatapp-fd187.appspot.com",
-    messagingSenderId: "919355591895",  // 🔥 Added messagingSenderId for FCM
+    messagingSenderId: "919355591895",  // ✅ Ensure this is included
     appId: "1:919355591895:web:31eba4577ba627fe17f492"
 };
 
+// ✅ Now Initialize Firebase
+const app = initializeApp(firebaseConfig);
+console.log("Firebase Config:", firebaseConfig); // This should work now!
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
