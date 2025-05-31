@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebas
 import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, deleteDoc, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-messaging.js";
 
-// ✅ Corrected Firebase Configuration
+// ✅ Ensure Firebase Configuration is placed at the top
 const firebaseConfig = {
     apiKey: "AIzaSyBA5Dr-NS2B-bZKoru3bOHbXnr-fsQjFA4",
     authDomain: "chatapp-fd187.firebaseapp.com",
@@ -12,7 +12,7 @@ const firebaseConfig = {
     appId: "1:919355591895:web:31eba4577ba627fe17f492"
 };
 
-// ✅ Initialize Firebase once (Fix duplicate `app` issue)
+// ✅ Initialize Firebase **only once** (Fixed duplicate `app` error)
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const messaging = getMessaging(app);
