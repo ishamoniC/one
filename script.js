@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebas
 import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, deleteDoc, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-messaging.js";
 
-// ✅ Firebase Configuration
+// ✅ Firebase Configuration (Ensure it's placed first)
 const firebaseConfig = {
     apiKey: "AIzaSyBA5Dr-NS2B-bZKoru3bOHbXnr-fsQjFA4",
     authDomain: "chatapp-fd187.firebaseapp.com",
@@ -17,9 +17,9 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const messaging = getMessaging(app);
 
-// ✅ Register Firebase Service Worker
+// ✅ Register Firebase Service Worker (Fixes 404 error)
 if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("firebase-messaging-sw.js")
+    navigator.serviceWorker.register("/firebase-messaging-sw.js")
         .then((registration) => {
             console.log("Service Worker Registered:", registration);
         }).catch((error) => {
@@ -62,115 +62,118 @@ document.addEventListener("DOMContentLoaded", function () {
     const logoutButton = document.getElementById("logout-btn");
 
     if (!loginButton) {
-        console.warn("Login button not found, skipping login setup.");
-    } else {
-        loginButton.addEventListener("click", function () {
-            const usernameInput = document.getElementById("username");
-            const passwordInput = document.getElementById("password");
-
-            if (!usernameInput || !passwordInput) {
-                console.error("Login input fields not found!");
-                return;
-            }
-
-            const username = usernameInput.value.toLowerCase();
-            const password = passwordInput.value;
-
-            if (users[username] && users[username] === password) {
-                localStorage.setItem("loggedInUser", username);
-                window.location.href = "chat.html";
-            } else {
-                alert("Invalid username or password");
-            }
-        });
+        console.warn("Login button not found! Ensure script loads after page renders.");
+        return;
     }
 
-    if (logoutButton) {
-        logoutButton.addEventListener("click", function () {
-            localStorage.removeItem("loggedInUser");
-            window.location.href = "login.html";
-        });
-    }
+    loginButton.addEventListener("click", function () {
+        const usernameInput = document.getElementById("username");
+        const passwordInput = document.getElementById("password");
 
-    if (window.location.pathname.includes("chat.html")) {
-        const loggedInUser = localStorage.getItem("loggedInUser");
-        if (!loggedInUser || !users[loggedInUser]) {
-            window.location.href = "login.html";
+        if (!usernameInput || !passwordInput) {
+            console.error("Login input fields not found!");
+            return;
         }
-    }
 
-    const sendButton = document.getElementById("send-btn");
-    const messageInput = document.getElementById("message-input");
-    const messagesDiv = document.getElementById("messages");
-    const deleteButton = document.getElementById("delete-btn");
-    const loggedInUser = localStorage.getItem("loggedInUser") || "";
+        const username = usernameInput.value.toLowerCase();
+        const password = passwordInput.value;
 
-    let isPageActive = true;
-    document.addEventListener("visibilitychange", () => {
-        isPageActive = !document.hidden;
+        if (users[username] && users[username] === password) {
+            localStorage.setItem("loggedInUser", username);
+            window.location.href = "chat.html";
+        } else {
+            alert("Invalid username or password");
+        }
     });
-
-    if (sendButton) {
-        sendButton.addEventListener("click", async () => {
-            const messageText = messageInput.value.trim();
-            if (messageText !== "" && loggedInUser) {
-                await addDoc(collection(db, "messages"), {
-                    sender: loggedInUser,
-                    text: messageText,
-                    timestamp: serverTimestamp()
-                });
-                messageInput.value = "";
-            }
-        });
-    }
-
-    const q = query(collection(db, "messages"), orderBy("timestamp"));
-    onSnapshot(q, (snapshot) => {
-        messagesDiv.innerHTML = "";
-        snapshot.forEach(doc => {
-            const msgData = doc.data();
-            const msgElement = document.createElement("div");
-
-            if (!msgData.text) {
-                console.error("Message missing text:", msgData);
-                return;
-            }
-
-            msgElement.textContent = msgData.text;
-            msgElement.classList.add(msgData.sender.trim() === loggedInUser.trim() ? "sent-message" : "received-message");
-            messagesDiv.appendChild(msgElement);
-
-            if (!isPageActive && "Notification" in window && Notification.permission === "granted" && msgData.sender !== loggedInUser) {
-                new Notification(`New message from ${msgData.sender}`, {
-                    body: msgData.text,
-                    icon: "https://icons.iconarchive.com/icons/icons8/windows-8/256/Messaging-Bubble-icon.png"
-                });
-            }
-        });
-
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
-
-    if (deleteButton) {
-        deleteButton.addEventListener("click", async () => {
-            const password = prompt("Enter the password to delete all messages:");
-            if (password === "pass1234") {
-                const snapshot = await getDocs(collection(db, "messages"));
-                snapshot.forEach(async (message) => {
-                    await deleteDoc(doc(db, "messages", message.id));
-                });
-                alert("All messages have been deleted!");
-            } else {
-                alert("Incorrect password. Deletion canceled.");
-            }
-        });
-    }
-
-    if (messageInput) {
-        messageInput.addEventListener("keypress", (event) => {
-            if (event.key === "Enter") {
-                sendButton.click();
-            }
-        });
-    }
 });
+
+if (logoutButton) {
+    logoutButton.addEventListener("click", function () {
+        localStorage.removeItem("loggedInUser");
+        window.location.href = "login.html";
+    });
+}
+
+if (window.location.pathname.includes("chat.html")) {
+    const loggedInUser = localStorage.getItem("loggedInUser");
+    if (!loggedInUser || !users[loggedInUser]) {
+        window.location.href = "login.html";
+    }
+}
+
+const sendButton = document.getElementById("send-btn");
+const messageInput = document.getElementById("message-input");
+const messagesDiv = document.getElementById("messages");
+const deleteButton = document.getElementById("delete-btn");
+const loggedInUser = localStorage.getItem("loggedInUser") || "";
+
+// ✅ Track page visibility (Fixing notification behavior)
+let isPageActive = true;
+document.addEventListener("visibilitychange", () => {
+    isPageActive = !document.hidden;
+});
+
+if (sendButton) {
+    sendButton.addEventListener("click", async () => {
+        const messageText = messageInput.value.trim();
+        if (messageText !== "" && loggedInUser) {
+            await addDoc(collection(db, "messages"), {
+                sender: loggedInUser,
+                text: messageText,
+                timestamp: serverTimestamp()
+            });
+            messageInput.value = "";
+        }
+    });
+}
+
+const q = query(collection(db, "messages"), orderBy("timestamp"));
+onSnapshot(q, (snapshot) => {
+    messagesDiv.innerHTML = "";
+    snapshot.forEach(doc => {
+        const msgData = doc.data();
+        const msgElement = document.createElement("div");
+
+        if (!msgData.text) {
+            console.error("Message missing text:", msgData);
+            return;
+        }
+
+        msgElement.textContent = msgData.text;
+        msgElement.classList.add(msgData.sender.trim() === loggedInUser.trim() ? "sent-message" : "received-message");
+        messagesDiv.appendChild(msgElement);
+
+        // ✅ Show notifications only if user is inactive
+        if (!isPageActive && "Notification" in window && Notification.permission === "granted" && msgData.sender !== loggedInUser) {
+            new Notification(`New message from ${msgData.sender}`, {
+                body: msgData.text,
+                icon: "https://icons.iconarchive.com/icons/icons8/windows-8/256/Messaging-Bubble-icon.png"
+            });
+        }
+    });
+
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+});
+
+if (deleteButton) {
+    deleteButton.addEventListener("click", async () => {
+        const password = prompt("Enter the password to delete all messages:");
+        if (password === "pass1234") {
+            const snapshot = await getDocs(collection(db, "messages"));
+            snapshot.forEach(async (message) => {
+                await deleteDoc(doc(db, "messages", message.id));
+            });
+            alert("All messages have been deleted!");
+        } else {
+            alert("Incorrect password. Deletion canceled.");
+        }
+    });
+}
+
+if (messageInput) {
+    messageInput.addEventListener("keypress", (event) => {
+        if (event.key === "Enter") {
+            sendButton.click();
+        }
+    });
+}
