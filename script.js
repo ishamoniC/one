@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const loginButton = document.getElementById("login-btn");
     const logoutButton = document.getElementById("logout-btn");
 
-    // Handle login system (prevent errors if login button doesn't exist)
+    // Handle login system (Prevent errors if `login-btn` doesn’t exist)
     if (loginButton) {
         loginButton.addEventListener("click", function () {
             const usernameInput = document.getElementById("username");
@@ -98,7 +98,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Real-time message updates + Notifications (only if user is inactive)
+    // Real-time message updates + Notifications (Only if user is inactive)
     const q = query(collection(db, "messages"), orderBy("timestamp"));
     onSnapshot(q, (snapshot) => {
         messagesDiv.innerHTML = "";
