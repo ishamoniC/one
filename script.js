@@ -8,27 +8,27 @@ const firebaseConfig = {
     authDomain: "chatapp-fd187.firebaseapp.com",
     projectId: "chatapp-fd187",
     storageBucket: "chatapp-fd187.appspot.com",
-    messagingSenderId: "919355591895",  // 🔥 Fix: Added messagingSenderId
+    messagingSenderId: "919355591895",
     appId: "1:919355591895:web:31eba4577ba627fe17f492"
 };
 
-// ✅ Initialize Firebase **only once** (Fixed duplicate `app` error)
+// ✅ Initialize Firebase **only once**
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const messaging = getMessaging(app);
 
 // ✅ Request notification permission from the user
 Notification.requestPermission().then(permission => {
+    console.log("Notification permission status:", permission);
     if (permission === "granted") {
-        console.log("Notifications allowed!");
         getToken(messaging, { vapidKey: "BEPQKu1vJvO0rVlQsuoxDE2IAKBl3lbQrJck4jr1htQ3VFpZJDg0O6UnuYdNmAfYvVCrQB1_-G5-j9rV63TcFe8" })
             .then((currentToken) => {
                 if (currentToken) {
-                    console.log("FCM Token:", currentToken);
+                    console.log("FCM Token received:", currentToken);
                 } else {
                     console.warn("No FCM token received");
                 }
-            });
+            }).catch(error => console.error("Error fetching FCM token:", error));
     }
 });
 
@@ -51,7 +51,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const loginButton = document.getElementById("login-btn");
     const logoutButton = document.getElementById("logout-btn");
 
-    if (loginButton) {
+    if (!loginButton) {
+        console.warn("Login button not found, skipping login setup.");
+    } else {
         loginButton.addEventListener("click", function () {
             const usernameInput = document.getElementById("username");
             const passwordInput = document.getElementById("password");
@@ -71,8 +73,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 alert("Invalid username or password");
             }
         });
-    } else {
-        console.error("Login button not found!");
     }
 
     if (logoutButton) {
