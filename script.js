@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, deleteDoc, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-messaging.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -13,6 +14,31 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const messaging = getMessaging(app);  // Initialize Firebase Messaging
+
+// Request notification permission
+Notification.requestPermission().then(permission => {
+    if (permission === "granted") {
+        console.log("Notifications allowed!");
+        getToken(messaging, { vapidKey: "BEPQKu1vJvO0rVlQsuoxDE2IAKBl3lbQrJck4jr1htQ3VFpZJDg0O6UnuYdNmAfYvVCrQB1_-G5-j9rV63TcFe8" })
+            .then((currentToken) => {
+                if (currentToken) {
+                    console.log("FCM Token:", currentToken);
+                } else {
+                    console.warn("No FCM token received");
+                }
+            });
+    }
+});
+
+// Listen for FCM messages
+onMessage(messaging, (payload) => {
+    console.log("New Notification:", payload);
+    new Notification(payload.notification.title, {
+        body: payload.notification.body,
+        icon: payload.notification.icon || "https://icons.iconarchive.com/icons/icons8/windows-8/256/Messaging-Bubble-icon.png"
+    });
+});
 
 // Predefined users
 const users = {
@@ -71,11 +97,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const deleteButton = document.getElementById("delete-btn");
 
     const loggedInUser = localStorage.getItem("loggedInUser") || "";
-
-    // Ask for notification permission
-    if ("Notification" in window && Notification.permission !== "granted") {
-        Notification.requestPermission();
-    }
 
     // Track visibility of the page
     let isPageActive = true;
