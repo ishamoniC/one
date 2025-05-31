@@ -27,8 +27,16 @@ document.addEventListener("DOMContentLoaded", function () {
     // Handle login system (prevent errors if login button doesn't exist)
     if (loginButton) {
         loginButton.addEventListener("click", function () {
-            const username = document.getElementById("username").value.toLowerCase();
-            const password = document.getElementById("password").value;
+            const usernameInput = document.getElementById("username");
+            const passwordInput = document.getElementById("password");
+
+            if (!usernameInput || !passwordInput) {
+                console.error("Login input fields not found!");
+                return;
+            }
+
+            const username = usernameInput.value.toLowerCase();
+            const password = passwordInput.value;
 
             if (users[username] && users[username] === password) {
                 localStorage.setItem("loggedInUser", username);
@@ -37,6 +45,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 alert("Invalid username or password");
             }
         });
+    } else {
+        console.error("Login button not found!");
     }
 
     // Handle logout system
