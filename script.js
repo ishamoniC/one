@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebas
 import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, deleteDoc, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-messaging.js";
 
-// ✅ Firebase Configuration (Ensure it's placed first)
+// ✅ Firebase Configuration (Ensure it's first)
 const firebaseConfig = {
     apiKey: "AIzaSyBA5Dr-NS2B-bZKoru3bOHbXnr-fsQjFA4",
     authDomain: "chatapp-fd187.firebaseapp.com",
@@ -21,30 +21,30 @@ const messaging = getMessaging(app);
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/firebase-messaging-sw.js")
         .then((registration) => {
-            console.log("Service Worker Registered:", registration);
+            console.log("✅ Service Worker Registered:", registration);
         }).catch((error) => {
-            console.error("Service Worker Registration Failed:", error);
+            console.error("🚨 Service Worker Registration Failed:", error);
         });
 }
 
 // ✅ Request notification permission from the user
 Notification.requestPermission().then(permission => {
-    console.log("Notification permission status:", permission);
+    console.log("✅ Notification permission status:", permission);
     if (permission === "granted") {
         getToken(messaging, { vapidKey: "BEPQKu1vJvO0rVlQsuoxDE2IAKBl3lbQrJck4jr1htQ3VFpZJDg0O6UnuYdNmAfYvVCrQB1_-G5-j9rV63TcFe8" })
             .then((currentToken) => {
                 if (currentToken) {
-                    console.log("FCM Token received:", currentToken);
+                    console.log("✅ FCM Token received:", currentToken);
                 } else {
-                    console.warn("No FCM token received");
+                    console.warn("🚨 No FCM token received");
                 }
-            }).catch(error => console.error("Error fetching FCM token:", error));
+            }).catch(error => console.error("🚨 Error fetching FCM token:", error));
     }
 });
 
 // ✅ Listen for FCM messages
 onMessage(messaging, (payload) => {
-    console.log("New Notification:", payload);
+    console.log("✅ New Notification:", payload);
     new Notification(payload.notification.title, {
         body: payload.notification.body,
         icon: payload.notification.icon || "https://icons.iconarchive.com/icons/icons8/windows-8/256/Messaging-Bubble-icon.png"
@@ -61,8 +61,17 @@ document.addEventListener("DOMContentLoaded", function () {
     const loginButton = document.getElementById("login-btn");
     const logoutButton = document.getElementById("logout-btn");
 
+    if (!logoutButton) {
+        console.warn("🚨 Logout button not found! Skipping logout setup.");
+    } else {
+        logoutButton.addEventListener("click", function () {
+            localStorage.removeItem("loggedInUser");
+            window.location.href = "login.html";
+        });
+    }
+
     if (!loginButton) {
-        console.warn("Login button not found! Ensure script loads after page renders.");
+        console.warn("🚨 Login button not found! Ensure script runs after page loads.");
         return;
     }
 
@@ -71,12 +80,12 @@ document.addEventListener("DOMContentLoaded", function () {
         const passwordInput = document.getElementById("password");
 
         if (!usernameInput || !passwordInput) {
-            console.error("Login input fields not found!");
+            console.error("🚨 Login input fields not found!");
             return;
         }
 
         const username = usernameInput.value.toLowerCase();
-        const password = passwordInput.value;
+        const password = usernameInput.value;
 
         if (users[username] && users[username] === password) {
             localStorage.setItem("loggedInUser", username);
@@ -86,13 +95,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 });
-
-if (logoutButton) {
-    logoutButton.addEventListener("click", function () {
-        localStorage.removeItem("loggedInUser");
-        window.location.href = "login.html";
-    });
-}
 
 if (window.location.pathname.includes("chat.html")) {
     const loggedInUser = localStorage.getItem("loggedInUser");
@@ -135,7 +137,7 @@ onSnapshot(q, (snapshot) => {
         const msgElement = document.createElement("div");
 
         if (!msgData.text) {
-            console.error("Message missing text:", msgData);
+            console.error("🚨 Message missing text:", msgData);
             return;
         }
 
@@ -163,9 +165,9 @@ if (deleteButton) {
             snapshot.forEach(async (message) => {
                 await deleteDoc(doc(db, "messages", message.id));
             });
-            alert("All messages have been deleted!");
+            alert("✅ All messages have been deleted!");
         } else {
-            alert("Incorrect password. Deletion canceled.");
+            alert("🚨 Incorrect password. Deletion canceled.");
         }
     });
 }
