@@ -21,61 +21,41 @@ const users = {
 };
 
 document.addEventListener("DOMContentLoaded", function () {
-    const loginButton = document.getElementById("login-btn");
-    if (loginButton) {
-        loginButton.addEventListener("click", function () {
-            const username = document.getElementById("username").value.toLowerCase();
-            const password = document.getElementById("password").value;
-
-            if (users[username] && users[username] === password) {
-                localStorage.setItem("loggedInUser", username);
-                window.location.href = "chat.html";
-            } else {
-                alert("Invalid username or password");
-            }
-        });
-    }
-
-    const logoutButton = document.getElementById("logout-btn");
-    if (logoutButton) {
-        logoutButton.addEventListener("click", function () {
-            localStorage.removeItem("loggedInUser");
-            window.location.href = "login.html";
-        });
-    }
-
-    if (window.location.pathname.includes("chat.html")) {
-        const loggedInUser = localStorage.getItem("loggedInUser");
-        if (!loggedInUser || !users[loggedInUser]) {
-            window.location.href = "login.html";
-        }
-    }
-
     const sendButton = document.getElementById("send-btn");
-    if (sendButton) {
-        sendButton.addEventListener("click", async () => {
-            const messageInput = document.getElementById("message-input");
-            const messageText = messageInput.value.trim();
-            const sender = localStorage.getItem("loggedInUser");
+    const messageInput = document.getElementById("message-input");
+    const messagesDiv = document.getElementById("messages");
+    const deleteButton = document.getElementById("delete-btn");
 
-            if (messageText !== "" && sender) {
-                await addDoc(collection(db, "messages"), {
-                    sender: sender,
-                    text: messageText,
-                    timestamp: serverTimestamp()
-                });
-                messageInput.value = "";
-            }
-        });
+    const loggedInUser = localStorage.getItem("loggedInUser") || "";
+
+    // Ask for notification permission
+    if ("Notification" in window && Notification.permission !== "granted") {
+        Notification.requestPermission();
     }
 
+    // Track visibility of the page
+    let isPageActive = true;
+    document.addEventListener("visibilitychange", () => {
+        isPageActive = !document.hidden;
+    });
+
+    // Send message
+    sendButton.addEventListener("click", async () => {
+        const messageText = messageInput.value.trim();
+        if (messageText !== "" && loggedInUser) {
+            await addDoc(collection(db, "messages"), {
+                sender: loggedInUser,
+                text: messageText,
+                timestamp: serverTimestamp()
+            });
+            messageInput.value = "";
+        }
+    });
+
+    // Real-time message updates + Notifications (only if user is inactive)
     const q = query(collection(db, "messages"), orderBy("timestamp"));
     onSnapshot(q, (snapshot) => {
-        const messagesDiv = document.getElementById("messages");
         messagesDiv.innerHTML = "";
-
-        const loggedInUser = localStorage.getItem("loggedInUser") || "";
-
         snapshot.forEach(doc => {
             const msgData = doc.data();
             const msgElement = document.createElement("div");
@@ -85,43 +65,40 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            msgElement.textContent = msgData.text; // Only show the message text
-
-            // Ensure sender exists before applying `.trim()`
-            if (msgData.sender && loggedInUser && msgData.sender.trim() === loggedInUser.trim()) {
-                msgElement.classList.add("sent-message");
-            } else {
-                msgElement.classList.add("received-message");
-            }
-
+            msgElement.textContent = msgData.text;
+            msgElement.classList.add(msgData.sender.trim() === loggedInUser.trim() ? "sent-message" : "received-message");
             messagesDiv.appendChild(msgElement);
+
+            // Show notification only when user is not on the website
+            if (!isPageActive && "Notification" in window && Notification.permission === "granted" && msgData.sender !== loggedInUser) {
+                new Notification(`New message from ${msgData.sender}`, {
+                    body: msgData.text,
+                    icon: "https://icons.iconarchive.com/icons/icons8/windows-8/256/Messaging-Bubble-icon.png"
+                });
+            }
         });
 
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
 
-    const deleteButton = document.getElementById("delete-btn");
-    if (deleteButton) {
-        deleteButton.addEventListener("click", async () => {
-            const password = prompt("Enter the password to delete all messages:");
-            if (password === "pass1234") {
-                const snapshot = await getDocs(collection(db, "messages"));
-                snapshot.forEach(async (message) => {
-                    await deleteDoc(doc(db, "messages", message.id));
-                });
-                alert("All messages have been deleted!");
-            } else {
-                alert("Incorrect password. Deletion canceled.");
-            }
-        });
-    }
+    // Delete all messages with password prompt
+    deleteButton.addEventListener("click", async () => {
+        const password = prompt("Enter the password to delete all messages:");
+        if (password === "pass1234") { // Password check
+            const snapshot = await getDocs(collection(db, "messages"));
+            snapshot.forEach(async (message) => {
+                await deleteDoc(doc(db, "messages", message.id));
+            });
+            alert("All messages have been deleted!");
+        } else {
+            alert("Incorrect password. Deletion canceled.");
+        }
+    });
 
-    const messageInput = document.getElementById("message-input");
-    if (messageInput) {
-        messageInput.addEventListener("keypress", (event) => {
-            if (event.key === "Enter") {
-                document.getElementById("send-btn").click();
-            }
-        });
-    }
+    // Press Enter to send message
+    messageInput.addEventListener("keypress", (event) => {
+        if (event.key === "Enter") {
+            sendButton.click();
+        }
+    });
 });
