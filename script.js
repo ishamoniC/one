@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebas
 import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, deleteDoc, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-messaging.js";
 
-// ✅ Ensure Firebase Configuration is placed at the top
+// ✅ Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyBA5Dr-NS2B-bZKoru3bOHbXnr-fsQjFA4",
     authDomain: "chatapp-fd187.firebaseapp.com",
@@ -16,6 +16,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const messaging = getMessaging(app);
+
+// ✅ Register Firebase Service Worker
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("firebase-messaging-sw.js")
+        .then((registration) => {
+            console.log("Service Worker Registered:", registration);
+        }).catch((error) => {
+            console.error("Service Worker Registration Failed:", error);
+        });
+}
 
 // ✅ Request notification permission from the user
 Notification.requestPermission().then(permission => {
